@@ -9,4 +9,13 @@ public interface IClientsService
     Task<bool> TripsExist(int id);
     Task<bool> ClientExist(int id);
     
+    Task<int?> NewClient(string firstName, string lastName, string email, string telephone, string pesel);
+    
+    Task<bool> MaxPeople(int id);
+    
+    Task<bool> RegisterClientToTrip(int clientId, int tripId);
+    
+    Task<bool> ClientOnTripExist(int clientId, int tripId);
+    
+    Task<bool> DeleteReservation(int clientId, int tripId);
 }

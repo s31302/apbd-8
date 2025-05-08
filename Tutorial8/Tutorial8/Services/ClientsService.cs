@@ -94,4 +94,97 @@ public class ClientsService : IClientsService
         }
         
     }
+
+    public async Task<int?> NewClient(string firstName, string lastName, string email, string telephone,
+        string pesel)
+    {
+
+        string command = "INSERT INTO Client (FirstName, LastName, Email, Telephone, Pesel) OUTPUT INSERTED.IdClient VALUES (@name, @lastName, @email, @telephone, @pesel)";
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        using (SqlCommand cmd = new SqlCommand(command, conn))
+        {
+            cmd.Parameters.AddWithValue("@name", firstName);
+            cmd.Parameters.AddWithValue("@lastName", lastName);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@telephone", telephone);
+            cmd.Parameters.AddWithValue("@pesel", pesel);
+            await conn.OpenAsync();
+
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null ? Convert.ToInt32(result) : null;
+
+        }
+    }
+
+    public async Task<bool> MaxPeople(int id)
+    {
+        string command = @"
+        SELECT t.IdTrip
+        FROM Trip t
+        LEFT JOIN Client_Trip ct ON t.IdTrip = ct.IdTrip
+        WHERE t.IdTrip = @id
+        GROUP BY t.IdTrip, t.MaxPeople
+        HAVING COUNT(ct.IdClient) < t.MaxPeople";  
+        
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        using (SqlCommand cmd = new SqlCommand(command, conn))
+        {
+            cmd.Parameters.AddWithValue("@id", id);
+            await conn.OpenAsync();
+
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                return await reader.ReadAsync();
+            }
+        }
+    }
+    
+    public async Task<bool> RegisterClientToTrip(int clientId, int tripId)
+    {
+        const string query = @"
+        INSERT INTO Client_Trip (IdClient, IdTrip, RegisteredAt)
+        VALUES (@clientId, @tripId, @registeredAt)";
+    
+        using var conn = new SqlConnection(_connectionString);
+        using var cmd = new SqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@clientId", clientId);
+        cmd.Parameters.AddWithValue("@tripId", tripId);
+        cmd.Parameters.AddWithValue("@registeredAt", int.Parse(DateTime.Now.ToString("yyyyMMdd")));
+    
+        await conn.OpenAsync();
+        var result = await cmd.ExecuteNonQueryAsync();
+        return result > 0;
+    }
+
+    public async Task<bool> ClientOnTripExist(int clientId, int tripId)
+    {
+        string command = "SELECT IdClient FROM Client_Trip WHERE IdClient = @idClient and IdTrip = @idTrip";
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        using (SqlCommand cmd = new SqlCommand(command, conn))
+        {
+            cmd.Parameters.AddWithValue("@idClient", clientId);
+            cmd.Parameters.AddWithValue("@idTrip", tripId);
+            await conn.OpenAsync();
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                return await reader.ReadAsync();
+            }    
+        }
+    }
+
+    public async Task<bool> DeleteReservation(int clientId, int tripId)
+    {
+        string query = "DELETE FROM Client_Trip WHERE IdClient = @idClient and IdTrip = @idTrip";
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        using (SqlCommand command = new SqlCommand(query, connection))
+        {
+            command.Parameters.AddWithValue("@idClient", clientId);
+            command.Parameters.AddWithValue("@idTrip", tripId);
+            await connection.OpenAsync();
+
+            int rowsAffected = await command.ExecuteNonQueryAsync();
+            return rowsAffected > 0;
+        }
+    }
+
 }
