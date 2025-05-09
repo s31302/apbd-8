@@ -26,11 +26,7 @@ namespace Tutorial8.Controllers
                 return NotFound("Client not found");
             }
             
-            var tripsExist = await _clientsService.TripsExist(id);
-            if (!tripsExist)
-            {
-                return NotFound("Trip not found");
-            }
+            
             
             var trips = await _clientsService.GetClientTrips(id);
             
