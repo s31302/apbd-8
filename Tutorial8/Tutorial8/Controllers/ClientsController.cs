@@ -38,7 +38,7 @@ namespace Tutorial8.Controllers
         }
         
         [HttpPost]
-        public async Task<IActionResult> AddNewClient([FromBody] ClientDTO request)
+        public async Task<IActionResult> AddNewClient([FromBody] ClientDTO client)
         {
             //sprawdzam czy dane pasuja do modlelow ktore okreslilam sobie w ClientDTO
             if (!ModelState.IsValid)
@@ -46,13 +46,7 @@ namespace Tutorial8.Controllers
                 return BadRequest(ModelState);
             }
 
-            var newClientId = await _clientsService.NewClient(
-                request.FirstName,
-                request.LastName,
-                request.Email,
-                request.Telephone,
-                request.Pesel
-            );
+            var newClientId = await _clientsService.NewClient(client);
 
             if (newClientId == null)
             {

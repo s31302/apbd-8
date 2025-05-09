@@ -9,7 +9,7 @@ public interface IClientsService
     Task<bool> TripsExist(int id);
     Task<bool> ClientExist(int id);
     
-    Task<int?> NewClient(string firstName, string lastName, string email, string telephone, string pesel);
+    Task<int?> NewClient(ClientDTO client);
     
     Task<bool> MaxPeople(int id);
     

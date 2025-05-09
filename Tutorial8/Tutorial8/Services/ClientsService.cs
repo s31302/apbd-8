@@ -101,19 +101,18 @@ public class ClientsService : IClientsService
         
     }
 
-    public async Task<int?> NewClient(string firstName, string lastName, string email, string telephone,
-        string pesel)
+    public async Task<int?> NewClient(ClientDTO client)
     {
         //wstawiam nowego klienta
         string command = "INSERT INTO Client (FirstName, LastName, Email, Telephone, Pesel) OUTPUT INSERTED.IdClient VALUES (@name, @lastName, @email, @telephone, @pesel)";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
-            cmd.Parameters.AddWithValue("@name", firstName);
-            cmd.Parameters.AddWithValue("@lastName", lastName);
-            cmd.Parameters.AddWithValue("@email", email);
-            cmd.Parameters.AddWithValue("@telephone", telephone);
-            cmd.Parameters.AddWithValue("@pesel", pesel);
+            cmd.Parameters.AddWithValue("@name", client.FirstName);
+            cmd.Parameters.AddWithValue("@lastName", client.LastName);
+            cmd.Parameters.AddWithValue("@email", client.Email);
+            cmd.Parameters.AddWithValue("@telephone", client.Telephone);
+            cmd.Parameters.AddWithValue("@pesel", client.Pesel);
             await conn.OpenAsync();
 
             var result = await cmd.ExecuteScalarAsync();
