@@ -9,9 +9,9 @@ public class TripsService : ITripsService
     
     public async Task<List<TripDTO>> GetTrips()
     {
-        var trips = new List<TripDTO>();
+        var trips = new Dictionary<int, TripDTO>();
 
-        string command = "SELECT t.IdTrip, t.Name, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, c.Name FROM Trip t JOIN Country_Trip ct ON t.IdTrip = ct.IdTrip JOIN Country c ON c.IdCountry = ct.IdCountry ";
+        string command = "SELECT t.IdTrip, t.Name, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, c.Name AS CountryName FROM Trip t JOIN Country_Trip ct ON t.IdTrip = ct.IdTrip JOIN Country c ON c.IdCountry = ct.IdCountry ";
         
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
@@ -22,29 +22,27 @@ public class TripsService : ITripsService
             {
                 while (await reader.ReadAsync())
                 {
-                    int idOrdinal = reader.GetOrdinal("IdTrip");
-                    trips.Add(new TripDTO()
+                    int idOrdinal = reader.GetInt32(reader.GetOrdinal("IdTrip"));
+
+                    if (!trips.ContainsKey(idOrdinal))
                     {
-                        Id = reader.GetInt32(idOrdinal),
-                        Name = reader.GetString(1),
-                        Description = reader.GetString(2),
-                        DateFrom = reader.GetDateTime(3),
-                        DateTo = reader.GetDateTime(4),
-                        MaxPeople = reader.GetInt32(5),
-                        Countries = new List<CountryDTO>()
+                        trips[idOrdinal] = new TripDTO()
                         {
-                            new CountryDTO()
-                            {
-                                Name = reader.GetString(6)
-                            }
-                        }
-                        
-                    });
+                            Id = idOrdinal,
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Description = reader.GetString(reader.GetOrdinal("Description")),
+                            DateFrom = reader.GetDateTime(reader.GetOrdinal("DateFrom")),
+                            DateTo = reader.GetDateTime(reader.GetOrdinal("DateTo")),
+                            MaxPeople = reader.GetInt32(reader.GetOrdinal("MaxPeople")),
+                            Countries = new List<CountryDTO>()
+                        };
+                    }
+                    var countryName = reader.GetString(reader.GetOrdinal("CountryName"));
+                    trips[idOrdinal].Countries.Add(new CountryDTO { Name = countryName });
                 }
+                
             }
         }
-        
-
-        return trips;
+        return trips.Values.ToList();
     }
 }
