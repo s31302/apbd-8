@@ -25,8 +25,12 @@ namespace Tutorial8.Controllers
             {
                 return NotFound("Client not found");
             }
-            
-            
+
+            var clientTripsExist = await _clientsService.ClientHasTrips(id);
+            if (!clientTripsExist)
+            {
+                return NotFound("Client dont have trips");
+            }
             
             var trips = await _clientsService.GetClientTrips(id);
             
@@ -36,6 +40,7 @@ namespace Tutorial8.Controllers
         [HttpPost]
         public async Task<IActionResult> AddNewClient([FromBody] ClientDTO request)
         {
+            //sprawdzam czy dane pasuja do modlelow ktore okreslilam sobie w ClientDTO
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -53,8 +58,7 @@ namespace Tutorial8.Controllers
             {
                 return BadRequest("Invalid input or failed to create client.");
             }
-            //czm nie created wez poszukaj pozamienieaj
-            return CreatedAtAction(nameof(AddNewClient), new { id = newClientId }, new { id = newClientId });
+            return Created(string.Empty, new { id = newClientId });
         }
 
         [HttpPut("{id}/trips/{tripId}")]
@@ -80,7 +84,7 @@ namespace Tutorial8.Controllers
             
             var success = await _clientsService.RegisterClientToTrip(id, tripId);
             if (!success)
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to register client to trip.");
+                return StatusCode(500, "Registering client failed");
             
             return Ok("Client successfully registered for the trip.");
         }
@@ -97,8 +101,7 @@ namespace Tutorial8.Controllers
             var success = await _clientsService.DeleteReservation(id, tripId);
             if (!success)
             {
-                //idk
-                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to delete client.");
+                return StatusCode(500, "Delete reservation went wrong");
             }
             
             return Ok("Client successfully deleted from the trip.");

@@ -12,6 +12,7 @@ public class ClientsService : IClientsService
     {
         var trips = new Dictionary<int, ClientTripDTO>();
 
+        //pobieram dane wycieczki dla id klienta
         string command = "SELECT t.IdTrip, t.Name, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, c.Name AS CountryName, clt.RegisteredAt, clt.PaymentDate FROM Client_Trip clt JOIN Trip t ON clt.IdTrip = t.IdTrip JOIN Country_Trip ct ON t.IdTrip = ct.IdTrip JOIN Country c ON c.IdCountry = ct.IdCountry WHERE clt.IdClient = @id";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
@@ -29,7 +30,7 @@ public class ClientsService : IClientsService
                         trips[idOrdinal] = new ClientTripDTO()
                         {
                             Id = idOrdinal,
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            Name = reader.GetString(1), //moge tak moge tak jak nizej
                             Description = reader.GetString(reader.GetOrdinal("Description")),
                             DateFrom = reader.GetDateTime(reader.GetOrdinal("DateFrom")),
                             DateTo = reader.GetDateTime(reader.GetOrdinal("DateTo")),
@@ -49,7 +50,8 @@ public class ClientsService : IClientsService
 
     public async Task<bool> TripsExist(int id)
     {
-        string command = "SELECT IdTrip FROM Client_Trip WHERE IdClient = @id";
+        //sprawdzzam czy istnieje wycieczka z takim id
+        string command = "SELECT IdTrip FROM Trip WHERE IdTrip = @id";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
         {
@@ -63,9 +65,27 @@ public class ClientsService : IClientsService
         }
        
     }
+    public async Task<bool> ClientHasTrips(int id)
+    {
+        //sprawdzam czy istnieje wycieczka dla kleinta z podanym id
+        string command = "SELECT IdTrip FROM Client_Trip WHERE IdClient = @id";
+        using (SqlConnection conn = new SqlConnection(_connectionString))
+        using (SqlCommand cmd = new SqlCommand(command, conn))
+        {
+            cmd.Parameters.AddWithValue("@id", id);
+            await conn.OpenAsync();
+
+            using (var reader = await cmd.ExecuteReaderAsync())
+            {
+                return await reader.ReadAsync();
+            }
+        }
+       
+    }
 
     public async Task<bool> ClientExist(int id)
     {
+        //sprawdzam czy istnieje klient z takim id
         string command = "SELECT IdClient FROM Client WHERE IdClient = @id";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
@@ -84,7 +104,7 @@ public class ClientsService : IClientsService
     public async Task<int?> NewClient(string firstName, string lastName, string email, string telephone,
         string pesel)
     {
-
+        //wstawiam nowego klienta
         string command = "INSERT INTO Client (FirstName, LastName, Email, Telephone, Pesel) OUTPUT INSERTED.IdClient VALUES (@name, @lastName, @email, @telephone, @pesel)";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
@@ -104,6 +124,7 @@ public class ClientsService : IClientsService
 
     public async Task<bool> MaxPeople(int id)
     {
+        //szukam wycieczki ktora ma mniej ludzi niz maks
         string command = @"
         SELECT t.IdTrip
         FROM Trip t
@@ -127,7 +148,8 @@ public class ClientsService : IClientsService
     
     public async Task<bool> RegisterClientToTrip(int clientId, int tripId)
     {
-        const string query = @"
+        //wstawiam "zapsiuje klienta na wycieczke"
+        string query = @"
         INSERT INTO Client_Trip (IdClient, IdTrip, RegisteredAt)
         VALUES (@clientId, @tripId, @registeredAt)";
     
@@ -144,6 +166,7 @@ public class ClientsService : IClientsService
 
     public async Task<bool> ClientOnTripExist(int clientId, int tripId)
     {
+        //sprawdzam czy istnieje rekord w tablicy Client_Trip "czy klient byal na wycieczce"
         string command = "SELECT IdClient FROM Client_Trip WHERE IdClient = @idClient and IdTrip = @idTrip";
         using (SqlConnection conn = new SqlConnection(_connectionString))
         using (SqlCommand cmd = new SqlCommand(command, conn))
@@ -160,6 +183,7 @@ public class ClientsService : IClientsService
 
     public async Task<bool> DeleteReservation(int clientId, int tripId)
     {
+        //usuwam rezerwacje klienta z wycieczki
         string query = "DELETE FROM Client_Trip WHERE IdClient = @idClient and IdTrip = @idTrip";
         using (SqlConnection connection = new SqlConnection(_connectionString))
         using (SqlCommand command = new SqlCommand(query, connection))

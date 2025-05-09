@@ -18,4 +18,5 @@ public interface IClientsService
     Task<bool> ClientOnTripExist(int clientId, int tripId);
     
     Task<bool> DeleteReservation(int clientId, int tripId);
+    Task<bool> ClientHasTrips(int id);
 }

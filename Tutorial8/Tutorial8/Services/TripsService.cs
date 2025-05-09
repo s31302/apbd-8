@@ -10,7 +10,8 @@ public class TripsService : ITripsService
     public async Task<List<TripDTO>> GetTrips()
     {
         var trips = new Dictionary<int, TripDTO>();
-
+        
+        //wyciagma dane wszystkich wycieczek
         string command = "SELECT t.IdTrip, t.Name, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, c.Name AS CountryName FROM Trip t JOIN Country_Trip ct ON t.IdTrip = ct.IdTrip JOIN Country c ON c.IdCountry = ct.IdCountry ";
         
         using (SqlConnection conn = new SqlConnection(_connectionString))
